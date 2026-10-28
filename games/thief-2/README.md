@@ -6,11 +6,12 @@
 | Versions tested | Steam (app 211740, buildid 1970) + NewDark 1.29 MP beta, `Thief2MP.exe` SHA-256 `e86b0645…1fe0` |
 | Projects | NewDark multiplayer beta (since 1.27, 2019); [T2MPFix](https://github.com/D3c3453d/T2MPFix): four separate fixes (remote player movement, a stock steering bug, player limit, environmental damage) |
 | QA level | automated |
-| Last updated | 2026-10-28 |
+| Last updated | 2026-10-29 |
 
 ## Where things stand
 
-Co-op of the original missions works with NewDark's MP beta (2–3 players, everyone runs the same version).
+Co-op of the original missions works with NewDark's MP beta (2–3 players stock, up to 8 with T2MPFix; everyone runs
+the same version).
 Out of the box, other players' avatars are shown in the wrong place (lagging, stuck on geometry, floating, sinking,
 warping, partly because the engine's steering reads uninitialized memory), the last player to join drops others
 (e.g. a 4th player kicks two), and hazards each game runs locally do no damage (e.g. lava). T2MPFix, a `dinput.dll`
@@ -57,6 +58,8 @@ engine bytes don't match) hooks nothing, so if NewDark fixes one of these itself
    interpolate (those without T2MPFix).
 3. **Player limit**, `max_players` (`cNetManager::SetMaxPlayers`, vtable slot 40): set to N+1 for N players, per
    Figgis. At the stock cap the last player to join gets others kicked (stock keeps 4: a 4th joiner kicks two).
+   The shipped ini says 8, the most there can be: the host's DirectPlay8 session has `dwMaxPlayers = 8`
+   (`0x684254`), so larger values are clamped. A 9th player waits at "Joining Game..." and drops no one.
 4. **Environmental damage**, `damage_fix` (`0x44bce0`): the MP damage filter zeroes all damage whose culprit is a
    Local Only object, on every machine (e.g. lava, a `Water Flow Group`). The hook lets it through on the machine
    that hosts the victim, so each player takes damage from their own copy of the hazard and nothing is applied twice.
@@ -91,6 +94,9 @@ which happened to avoid the steering bug (max ~3.0).
 
 Each fix alone, with every other fix off (same build):
 - `max_players=4`: 4 instances join and play; control with `max_players=0`: the 4th joiner drops the others.
+- `tools/qa/players.sh` (2026-10-29, build `070f9688…`): 4 players with `max_players=8`, 5 and 8 players: in
+  mission 1 each instance sees all the others every second for 60 s. A 9th instance stays at "Joining Game..."
+  and drops no one, also with the clamp removed (the cap was 10; DirectPlay is the limit).
 - `damage_fix=1` (`tools/qa/lava.sh`): the player dies in Soulforge's lava; `damage_fix=0`: unhurt (the stock bug).
 - All fixes off and QA off: nothing hooked or patched.
 
