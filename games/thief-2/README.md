@@ -35,9 +35,9 @@ the owner sends a heartbeat only when the receiver's dead-reckoned guess is more
 (minimum 100 ms apart for players); the receiver predicts with gravity and a raycast that stops at walls, then steers
 the avatar's physics body toward the guess with a velocity, colliding with the world on the way, and only teleports it
 when the error passes 12 units. Whether that steering pulls a moving avatar toward the guess at all depends on three
-stack floats the code never writes; in the plain game it doesn't, so avatars trail several units behind. The exe
-imports no sendto/recvfrom/bind, so the game transport is likely DirectPlay (not verified). No config var controls any
-of it.
+stack floats the code never writes; in the plain game it doesn't, so avatars trail several units behind. The game
+transport is DirectPlay (Windows offers to install it on the first launch; the exe's error strings name it). No config
+var controls any of it.
 
 ## What we changed
 
@@ -100,6 +100,8 @@ Earlier builds with the same fix code: 4 players with 2 moving, in-mission path_
 
 1. Everyone: T2Fix 1.29 with "Thief 2 Multiplayer Beta" (or NewDark 1.29 + `mp.zip` by hand).
 2. Everyone: copy `dinput.dll` and `T2MPFix.ini` into the game folder.
+   On the first launch Windows offers to install DirectPlay; accept it or multiplayer won't start (if it was
+   dismissed, `INSTALL.txt` says how to turn it on in Windows features).
 3. Host: forward port 5198 (NewDark MP release notes; 5199 too for the global server, per the video) or use a LAN VPN.
 
 ## Known issues
