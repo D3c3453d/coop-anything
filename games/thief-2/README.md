@@ -4,7 +4,7 @@
 |---|---|
 | Engine | Dark Engine, patched by NewDark (closed source); multiplayer = NewDark's "MP beta" `Thief2MP.exe` |
 | Versions tested | Steam (app 211740, buildid 1970) + NewDark 1.29 MP beta, `Thief2MP.exe` SHA-256 `e86b0645…1fe0` |
-| Projects | NewDark multiplayer beta (since 1.27, 2019); [T2MPFix](https://github.com/D3c3453d/T2MPFix): four separate fixes (remote player movement, a stock steering bug, 4-player cap, lava damage) |
+| Projects | NewDark multiplayer beta (since 1.27, 2019); [T2MPFix](https://github.com/D3c3453d/T2MPFix): four separate fixes (remote player movement, a stock steering bug, player limit, environmental damage) |
 | QA level | automated |
 | Last updated | 2026-10-28 |
 
@@ -12,10 +12,10 @@
 
 Co-op of the original missions works with NewDark's MP beta (2–4 players, everyone runs the same version).
 Out of the box, other players' avatars are shown in the wrong place (lagging, stuck on geometry, floating, sinking,
-warping, partly because the engine's steering reads uninitialized memory), a 4th player joining kicks two others,
-and lava does no damage. T2MPFix, a `dinput.dll` proxy every player drops into the game folder, has four separate
-fixes for these, each switched independently in `T2MPFix.ini`. Measured with two to four real game instances and a
-movement bot (below).
+warping, partly because the engine's steering reads uninitialized memory), the last player to join drops others
+(e.g. a 4th player kicks two), and hazards each game runs locally do no damage (e.g. lava). T2MPFix, a `dinput.dll`
+proxy every player drops into the game folder, has four separate fixes for these, each switched independently in
+`T2MPFix.ini`. Measured with two to four real game instances and a movement bot (below).
 
 ## Existing work
 
@@ -55,17 +55,18 @@ engine bytes don't match) hooks nothing, so if NewDark fixes one of these itself
    fails and avatars trail several units behind (path_dev max ~7.7); a hook in that call chain can flip it, which is
    how this was found. A 6-byte patch drops the test (always pull). It matters for players `recv_fix` doesn't
    interpolate (those without T2MPFix).
-3. **4-player cap**, `max_players` (`cNetManager::SetMaxPlayers`, vtable slot 40): set to N+1 for N players, per Figgis.
-4. **Lava damage**, `damage_fix` (`0x44bce0`): the MP damage filter zeroes all damage whose culprit is a Local Only
-   object (lava is a `Water Flow Group`), on every machine. The hook lets it through on the machine that hosts the
-   victim, so each player takes damage from their own copy of the lava and nothing is applied twice.
+3. **Player limit**, `max_players` (`cNetManager::SetMaxPlayers`, vtable slot 40): set to N+1 for N players, per
+   Figgis. At the stock cap the last player to join gets others kicked (stock keeps 4: a 4th joiner kicks two).
+4. **Environmental damage**, `damage_fix` (`0x44bce0`): the MP damage filter zeroes all damage whose culprit is a
+   Local Only object, on every machine (e.g. lava, a `Water Flow Group`). The hook lets it through on the machine
+   that hosts the victim, so each player takes damage from their own copy of the hazard and nothing is applied twice.
 
 ## QA
 
 Paths below are in the T2MPFix repo (https://github.com/D3c3453d/T2MPFix).
 
 - `mod/tests/`: host unit tests for the interpolation (6 cases incl. teleport, idle gap, heading wrap; mutation runs
-  fail as expected), the lava damage rule, and which hooks each combination of fixes installs.
+  fail as expected), the local-only damage rule, and which hooks each combination of fixes installs.
 - `tools/qa/test_analyze.py` (metric self-test incl. stuck, floating, standing-still runs).
 - `tools/qa/regress.sh`: real games on one PC (DLL-side QA channel drives the menus, bots drive the players,
   telemetry on both sides, network impairment in the DLL). "stock" is the real game: the steer function is not hooked

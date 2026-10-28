@@ -197,9 +197,9 @@
   qa: automated
   notes: NewDark ships its own multiplayer beta since 1.27 (2019); 1.29 (2026-09) fixes server-list and readables
     crashes. Stock remote avatars lag, stick on geometry and warp (send only when 4+ units off, physics steering,
-    12-unit snap, and the steering reads uninitialized memory), a 4th joiner kicks two players, and lava does no
-    damage. T2MPFix (MIT-licensed dinput.dll proxy; NewDark itself is closed) has four separate fixes, each switched on
-    its own; automated A/B with real instances shows avatar path deviation max 7.65 -> 0.13 units.
+    12-unit snap, and the steering reads uninitialized memory), the last player to join drops others (e.g. a 4th
+    kicks two), and hazards each game runs locally do no damage (e.g. lava). T2MPFix (MIT-licensed dinput.dll
+    proxy; NewDark itself is closed) has four separate fixes, each switched on its own; automated A/B with real instances shows avatar path deviation max 7.65 -> 0.13 units.
   sources:
   - https://www.ttlg.com/forums/showthread.php?t=146448
   - https://www.ttlg.com/forums/showthread.php?t=153456
