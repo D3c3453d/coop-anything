@@ -178,11 +178,9 @@
   year: 2000
   engine: Dark Engine (NewDark)
   project: NewDark multiplayer beta (Thief2MP.exe) + T2MPFix
-  url: https://www.ttlg.com/forums/showthread.php?t=153456
+  url: https://github.com/D3c3453d/T2MPFix
   other_urls:
-  - https://github.com/D3c3453d/T2MPFix
   - https://github.com/Xanfre/T2Fix
-  - https://www.systemshock.org/index.php?topic=12190.0
   kind: mod
   status: playable
   coop_scope:
@@ -195,16 +193,20 @@
   open_source: partial
   last_activity: 2026-10
   qa: automated
-  notes: NewDark ships its own multiplayer beta since 1.27 (2019); 1.29 (2026-09) fixes server-list and readables
-    crashes. Stock remote avatars lag, stick on geometry and warp (send only when 4+ units off, physics steering,
-    12-unit snap, and the steering reads uninitialized memory), the last player to join drops others (e.g. a 4th
-    kicks two), and hazards each game runs locally do no damage (e.g. lava). T2MPFix (MIT-licensed dinput.dll
-    proxy; NewDark itself is closed) has four separate fixes, each switched on its own; automated A/B with real instances shows avatar path deviation max 7.65 -> 0.13 units.
+  notes: >-
+    NewDark's own multiplayer beta (Thief2MP.exe, since 1.27; use 1.29 from 2026-09) plays the original missions in
+    co-op for 2-3 players. T2MPFix is a dinput.dll proxy (MIT; NewDark itself is closed) that every player drops into
+    the game folder. Its four fixes are switched on separately in T2MPFix.ini: (1) smooth remote players: frequent
+    position updates plus interpolation, so other players no longer lag, stick on geometry, float or warp (path
+    deviation 7.65 -> 0.13 units in automated tests with real game instances); (2) steering bug: a 6-byte patch for
+    stock code that reads uninitialized memory and leaves avatars trailing behind; (3) player limit: the last player
+    to join no longer drops others (stock: a 4th kicks two); (4) environmental damage: hazards each game runs
+    locally, such as lava, hurt players again.
   sources:
-  - https://www.ttlg.com/forums/showthread.php?t=146448
   - https://www.ttlg.com/forums/showthread.php?t=153456
-  - https://www.youtube.com/watch?v=aRiVJqx9cnQ
+  - https://www.ttlg.com/forums/showthread.php?t=146448
   - https://www.systemshock.org/index.php?topic=12190.0
+  - https://www.youtube.com/watch?v=aRiVJqx9cnQ
   checked: '2026-10-26'
   made_with_coop_anything: true
 - game: Half-Life

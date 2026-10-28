@@ -10,7 +10,7 @@
 
 ## Where things stand
 
-Co-op of the original missions works with NewDark's MP beta (2–4 players, everyone runs the same version).
+Co-op of the original missions works with NewDark's MP beta (2–3 players, everyone runs the same version).
 Out of the box, other players' avatars are shown in the wrong place (lagging, stuck on geometry, floating, sinking,
 warping, partly because the engine's steering reads uninitialized memory), the last player to join drops others
 (e.g. a 4th player kicks two), and hazards each game runs locally do no damage (e.g. lava). T2MPFix, a `dinput.dll`
