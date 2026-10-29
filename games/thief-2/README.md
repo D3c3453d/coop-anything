@@ -57,7 +57,7 @@ engine bytes don't match) hooks nothing, so if NewDark fixes one of these itself
    how this was found. A 6-byte patch drops the test (always pull). It matters for players `recv_fix` doesn't
    interpolate (those without T2MPFix).
 3. **Player limit**, `max_players` (`cNetManager::SetMaxPlayers`, vtable slot 40): set to N+1 for N players, per
-   Figgis. At the stock cap the last player to join gets others kicked (stock keeps 4: a 4th joiner kicks two).
+   Figgis. At the stock cap the last player to join gets others kicked (stock's cap is 4, so 3 fit and a 4th joiner kicks two).
    The shipped ini says 8, the most there can be: the host's DirectPlay8 session has `dwMaxPlayers = 8`
    (`0x684254`), so larger values are clamped. A 9th player waits at "Joining Game..." and drops no one.
 4. **Environmental damage**, `damage_fix` (`0x44bce0`): the MP damage filter zeroes all damage whose culprit is a
