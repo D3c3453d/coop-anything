@@ -75,24 +75,24 @@ Paths below are in the T2MPFix repo (https://github.com/D3c3453d/T2MPFix).
 - `tools/qa/test_analyze.py` (metric self-test incl. stuck, floating, standing-still runs).
 - `tools/qa/regress.sh`: real games on one PC (DLL-side QA channel drives the menus, bots drive the players,
   telemetry on both sides, network impairment in the DLL). "stock" is the real game: the steer function is not hooked
-  (telemetry walks the ghost table). Last run 2026-10-29, build `dinput.dll` `1f331f76…` (version 0.3):
+  (telemetry walks the ghost table). Last run 2026-10-29, build `dinput.dll` `817cbee6…` (version 0.3):
 
 ```
-PASS stock localhost (control)    travelled  287.7  path_dev p95 6.930 max 14.342  off>1  4407  jumps 1  lag p50 2.89  hb/s 1.3  fixed 0/7227
-PASS fixed localhost              travelled  286.5  path_dev p95 0.003 max 0.112  off>1     0  jumps 0  lag p50 0.30  hb/s 16.2  fixed 6811/7129
-PASS fixed 60+-30ms 2% loss       travelled  287.1  path_dev p95 0.003 max 0.138  off>1     0  jumps 0  lag p50 0.61  hb/s 15.5  fixed 6766/7096
-PASS fixed 150+-75ms 10% loss     travelled  285.1  path_dev p95 0.006 max 0.268  off>1     0  jumps 0  lag p50 0.96  hb/s 11.4  fixed 6709/7097
-PASS send_fix only                travelled  286.6  path_dev p95 7.778 max 10.086  off>1  4497  jumps 1  lag p50 2.51  hb/s 16.3  fixed 0/7108
-PASS recv_fix only                travelled  286.6  path_dev p95 2.615 max 3.480  off>1  3001  jumps 1  lag p50 1.14  hb/s 1.3  fixed 0/7114
-PASS steer_fix only               travelled  285.5  path_dev p95 2.639 max 3.836  off>1  2977  jumps 1  lag p50 1.12  hb/s 1.3  fixed 0/7114
-PASS mixed (mover without fix)    travelled  284.2  path_dev p95 2.575 max 3.546  off>1  2814  jumps 1  lag p50 1.09  hb/s 1.3  fixed 0/6869
+PASS stock localhost (control)    travelled  285.8  path_dev p95 7.052 max 14.870  off>1  4346  jumps 2  lag p50 3.03  hb/s 1.3  fixed 0/7119
+PASS fixed localhost              travelled  286.1  path_dev p95 0.003 max 0.134  off>1     0  jumps 0  lag p50 0.30  hb/s 16.4  fixed 6802/7120
+PASS fixed 60+-30ms 2% loss       travelled  285.2  path_dev p95 0.005 max 0.209  off>1     0  jumps 0  lag p50 0.61  hb/s 15.6  fixed 6780/7112
+PASS fixed 150+-75ms 10% loss     travelled  285.2  path_dev p95 0.006 max 0.245  off>1     0  jumps 0  lag p50 0.98  hb/s 11.4  fixed 6710/7100
+PASS send_fix only                travelled  287.0  path_dev p95 9.764 max 11.877  off>1  4154  jumps 2  lag p50 2.13  hb/s 16.4  fixed 0/7119
+PASS recv_fix only                travelled  285.9  path_dev p95 2.676 max 3.658  off>1  2996  jumps 1  lag p50 1.13  hb/s 1.3  fixed 0/7122
+PASS steer_fix only               travelled  286.7  path_dev p95 2.626 max 3.509  off>1  2981  jumps 1  lag p50 1.12  hb/s 1.3  fixed 0/7126
+PASS mixed (mover without fix)    travelled  284.3  path_dev p95 2.578 max 3.424  off>1  2816  jumps 1  lag p50 1.09  hb/s 1.3  fixed 0/6891
 ALL PASS
 ```
 
 (path_dev: distance in Dark units of the shown avatar from the player's true path; "off>1": frames more than 1 unit
-off it, out of ~7100.) Stock's max depends on a few snaps and varies between runs (7.7, 17.7, 14.3 in the last three);
+off it, out of ~7100.) Stock's max depends on a few snaps and varies between runs (7.7, 17.7, 14.3, 14.9 in the last four);
 its p95 stays at 6.5–7.3. "send_fix only" is a T2MPFix player seen by a player without it: no better than stock,
-usually a bit worse (p95 7.8 vs 6.9 here), so everyone should install it. Earlier tables (README history, NOTES)
+usually a bit worse (p95 9.8 vs 7.1 here), so everyone should install it. Earlier tables (README history, NOTES)
 called "stock" what was really stock behind our steer hook, which happened to avoid the steering bug (max ~3.0).
 
 Each fix alone, with every other fix off:
@@ -104,7 +104,7 @@ Each fix alone, with every other fix off:
   "Joining Game..." and drops no one, also with the clamp removed (the cap was 10; DirectPlay is the limit). The
   8+1 rerun on 0.3 failed with 189 MB of RAM free and wasn't repeated (details in NOTES).
 - `damage_fix=1` (`tools/qa/lava.sh`, version 0.3): the player dies in Soulforge's lava; `damage_fix=0`: unhurt
-  (the stock bug). The script first checks from telemetry that the player really reached the lava.
+  (the stock bug). A QA command places the player in the lava; telemetry confirms the position before scoring.
 - All fixes off and QA off: nothing hooked or patched.
 
 Earlier builds with the same fix code: 4 players with 2 moving, in-mission path_dev max ≤ 0.64; 3 players, 5 minutes,
@@ -138,5 +138,3 @@ In the game, a dead player is revived when another player frobs them; it's game 
 - Apply the same interpolation to AI ghosts.
 - Optional "keep running in background" for players (the QA subclass already does it).
 - `max_players` below 8: refuse joiners beyond N instead of letting them kick others (today only 8 is safe).
-- `lava.sh` walks to the lava with timed key presses and missed in 4 of 10 tries (the script retries and checks the
-  position); a QA command that places the player would make it deterministic.
