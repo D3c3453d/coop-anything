@@ -195,10 +195,12 @@
   last_activity: 2026-10
   qa: automated
   notes: >-
-    NewDark's own multiplayer beta (Thief2MP.exe, since 1.27; 1.29 from 2026-09) plays the original missions for 2-3
-    players. T2MPFix, a dinput.dll proxy (MIT) every player installs, adds four switchable fixes: smooth remote players
-    (path deviation p95 7.1 -> 0.003, max 14.9 -> 0.13 units in automated runs with real instances), a stock steering
-    bug, up to 8 players without the last joiner dropping others, and damage from local hazards such as lava.
+    NewDark's own multiplayer beta (Thief2MP.exe, since 1.27; use 1.29 from 2026-09) lets 2-3 players play the original
+    missions together. T2MPFix (MIT) is a small DLL that every player drops into the game folder. It has four fixes,
+    each of which can be turned off in T2MPFix.ini: (1) smooth movement: other players no longer lag behind, get stuck
+    on doorways, float or jump around (checked in automated tests with real game instances); (2) steering bug: players
+    who don't have T2MPFix no longer trail behind; (3) player limit: up to 8 players, and the last one to join no longer
+    kicks others out (stock: a 4th player kicks two); (4) environmental damage: hazards such as lava hurt again.
   sources:
   - https://www.ttlg.com/forums/showthread.php?t=153456
   - https://www.ttlg.com/forums/showthread.php?t=146448
