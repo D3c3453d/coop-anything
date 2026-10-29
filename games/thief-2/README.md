@@ -4,19 +4,20 @@
 |---|---|
 | Engine | Dark Engine, patched by NewDark (closed source); multiplayer = NewDark's "MP beta" `Thief2MP.exe` |
 | Versions tested | Steam (app 211740, buildid 1970) + NewDark 1.29 MP beta, `Thief2MP.exe` SHA-256 `e86b0645…1fe0` |
-| Projects | NewDark multiplayer beta (since 1.27, 2019); [T2MPFix](https://github.com/D3c3453d/T2MPFix): four separate fixes (remote player movement, a stock steering bug, player limit, environmental damage) |
+| Projects | NewDark multiplayer beta (since 1.27, 2019); [T2MPFix](https://github.com/D3c3453d/T2MPFix): four separate fixes (remote player movement, a stock steering bug, player limit, environmental damage). Directory: "NewDark multiplayer beta (Thief2MP.exe) + T2MPFix" in [DIRECTORY.md](../../DIRECTORY.md) |
 | QA level | automated |
 | Last updated | 2026-10-29 |
 
 ## Where things stand
 
-Co-op of the original missions works with NewDark's MP beta (2–3 players stock, up to 8 with T2MPFix; everyone runs
-the same version).
+NewDark's MP beta plays the original missions in co-op (2–3 players stock, up to 8 with T2MPFix; everyone runs the same
+version). Its own release notes (`mp_release_notes.txt` in `mp.zip`) call it a beta: "do not expect a fully working
+game", and some missions have completion objectives only the host can do.
 Out of the box, other players' avatars are shown in the wrong place (lagging, stuck on geometry, floating, sinking,
 warping, partly because the engine's steering reads uninitialized memory), the last player to join drops others
 (e.g. a 4th player kicks two), and hazards each game runs locally do no damage (e.g. lava). T2MPFix, a `dinput.dll`
 proxy every player drops into the game folder, has four separate fixes for these, each switched independently in
-`T2MPFix.ini`. Measured with two to four real game instances and a movement bot (below).
+`T2MPFix.ini`. Measured with two to nine real game instances and a movement bot (below), in missions 1 and 15 only.
 
 ## Existing work
 
@@ -53,13 +54,14 @@ engine bytes don't match) hooks nothing, so if NewDark fixes one of these itself
      refuses). Players whose stream is at stock rate (no `send_fix`) keep the stock behaviour.
 2. **Stock steering bug**, `steer_fix` (`0x553f07`): for a moving remote player the stock steer code decides whether
    to pull the avatar toward its prediction by testing three stack floats it never wrote. In the plain game the test
-   fails and avatars trail several units behind (path_dev max ~7.7); a hook in that call chain can flip it, which is
+   fails and avatars trail several units behind (path_dev p95 ~7); a hook in that call chain can flip it, which is
    how this was found. A 6-byte patch drops the test (always pull). It matters for players `recv_fix` doesn't
    interpolate (those without T2MPFix).
 3. **Player limit**, `max_players` (`cNetManager::SetMaxPlayers`, vtable slot 40): set to N+1 for N players, per
-   Figgis. At the stock cap the last player to join gets others kicked (stock's cap is 4, so 3 fit and a 4th joiner kicks two).
-   The shipped ini says 8, the most there can be: the host's DirectPlay8 session has `dwMaxPlayers = 8`
-   (`0x684254`), so larger values are clamped. A 9th player waits at "Joining Game..." and drops no one.
+   Figgis. At the stock cap the last player to join gets others kicked (stock's cap is 4, so 3 fit and a 4th joiner
+   kicks two). The shipped ini says 8, the most there can be: the host's DirectPlay8 session has `dwMaxPlayers = 8`
+   (`0x684254`), so larger values are clamped. A 9th player waits at "Joining Game..." and drops no one. A smaller
+   N only moves the bug: with `max_players=3` a 4th joiner still kicked two players, so the ini says to keep 8.
 4. **Environmental damage**, `damage_fix` (`0x44bce0`): the MP damage filter zeroes all damage whose culprit is a
    Local Only object, on every machine (e.g. lava, a `Water Flow Group`). The hook lets it through on the machine
    that hosts the victim, so each player takes damage from their own copy of the hazard and nothing is applied twice.
@@ -73,31 +75,36 @@ Paths below are in the T2MPFix repo (https://github.com/D3c3453d/T2MPFix).
 - `tools/qa/test_analyze.py` (metric self-test incl. stuck, floating, standing-still runs).
 - `tools/qa/regress.sh`: real games on one PC (DLL-side QA channel drives the menus, bots drive the players,
   telemetry on both sides, network impairment in the DLL). "stock" is the real game: the steer function is not hooked
-  (telemetry walks the ghost table). Last run 2026-10-28, build `dinput.dll` `04d806c9…`:
+  (telemetry walks the ghost table). Last run 2026-10-29, build `dinput.dll` `1f331f76…` (version 0.3):
 
 ```
-PASS stock localhost (control)    travelled  260.3  path_dev p95 6.481 max 7.652  off>1  3896  jumps 1  lag p50 3.04  hb/s 1.3  fixed 0/6519
-PASS fixed localhost              travelled  260.1  path_dev p95 0.003 max 0.127  off>1     0  jumps 0  lag p50 0.30  hb/s 16.5  fixed 6209/6527
-PASS fixed 60+-30ms 2% loss       travelled  259.8  path_dev p95 0.004 max 0.125  off>1     0  jumps 0  lag p50 0.62  hb/s 15.7  fixed 6182/6517
-PASS fixed 150+-75ms 10% loss     travelled  257.8  path_dev p95 0.013 max 0.236  off>1     0  jumps 0  lag p50 0.98  hb/s 11.6  fixed 6093/6503
-PASS send_fix only                travelled  259.8  path_dev p95 9.177 max 12.000  off>1  3482  jumps 2  lag p50 1.68  hb/s 16.5  fixed 0/6519
-PASS recv_fix only                travelled  259.7  path_dev p95 2.401 max 3.060  off>1  2668  jumps 0  lag p50 1.02  hb/s 1.3  fixed 0/6529
-PASS steer_fix only               travelled  257.1  path_dev p95 2.378 max 3.006  off>1  2702  jumps 1  lag p50 1.09  hb/s 1.4  fixed 0/6514
-PASS mixed (mover without fix)    travelled  257.3  path_dev p95 2.438 max 3.124  off>1  2667  jumps 1  lag p50 1.08  hb/s 1.3  fixed 0/6396
+PASS stock localhost (control)    travelled  287.7  path_dev p95 6.930 max 14.342  off>1  4407  jumps 1  lag p50 2.89  hb/s 1.3  fixed 0/7227
+PASS fixed localhost              travelled  286.5  path_dev p95 0.003 max 0.112  off>1     0  jumps 0  lag p50 0.30  hb/s 16.2  fixed 6811/7129
+PASS fixed 60+-30ms 2% loss       travelled  287.1  path_dev p95 0.003 max 0.138  off>1     0  jumps 0  lag p50 0.61  hb/s 15.5  fixed 6766/7096
+PASS fixed 150+-75ms 10% loss     travelled  285.1  path_dev p95 0.006 max 0.268  off>1     0  jumps 0  lag p50 0.96  hb/s 11.4  fixed 6709/7097
+PASS send_fix only                travelled  286.6  path_dev p95 7.778 max 10.086  off>1  4497  jumps 1  lag p50 2.51  hb/s 16.3  fixed 0/7108
+PASS recv_fix only                travelled  286.6  path_dev p95 2.615 max 3.480  off>1  3001  jumps 1  lag p50 1.14  hb/s 1.3  fixed 0/7114
+PASS steer_fix only               travelled  285.5  path_dev p95 2.639 max 3.836  off>1  2977  jumps 1  lag p50 1.12  hb/s 1.3  fixed 0/7114
+PASS mixed (mover without fix)    travelled  284.2  path_dev p95 2.575 max 3.546  off>1  2814  jumps 1  lag p50 1.09  hb/s 1.3  fixed 0/6869
 ALL PASS
 ```
 
 (path_dev: distance in Dark units of the shown avatar from the player's true path; "off>1": frames more than 1 unit
-off it, out of ~6500.) "send_fix only" is a T2MPFix player seen by a player without it: worse than stock, so everyone
-should install it. Earlier tables (README history, NOTES) called "stock" what was really stock behind our steer hook,
-which happened to avoid the steering bug (max ~3.0).
+off it, out of ~7100.) Stock's max depends on a few snaps and varies between runs (7.7, 17.7, 14.3 in the last three);
+its p95 stays at 6.5–7.3. "send_fix only" is a T2MPFix player seen by a player without it: no better than stock,
+usually a bit worse (p95 7.8 vs 6.9 here), so everyone should install it. Earlier tables (README history, NOTES)
+called "stock" what was really stock behind our steer hook, which happened to avoid the steering bug (max ~3.0).
 
-Each fix alone, with every other fix off (same build):
-- `max_players=4`: 4 instances join and play; control with `max_players=0`: the 4th joiner drops the others.
-- `tools/qa/players.sh` (2026-10-29, build `070f9688…`): 4 players with `max_players=8`, 5 and 8 players: in
-  mission 1 each instance sees all the others every second for 60 s. A 9th instance stays at "Joining Game..."
-  and drops no one, also with the clamp removed (the cap was 10; DirectPlay is the limit).
-- `damage_fix=1` (`tools/qa/lava.sh`): the player dies in Soulforge's lava; `damage_fix=0`: unhurt (the stock bug).
+Each fix alone, with every other fix off:
+- `max_players=4` (earlier build): 4 instances join and play; control with `max_players=0`: the 4th joiner drops
+  the others.
+- `tools/qa/players.sh` (version 0.3): `MAXP=8 players.sh 4` and `players.sh 3` PASS (each instance sees all the
+  others every second for 60 s). With `max_players=3` a 4th joiner kicked two players (see fix 3).
+- `tools/qa/players.sh` (build `070f9688…`, same fix code as 0.3): 5 and 8 players PASS. A 9th instance stays at
+  "Joining Game..." and drops no one, also with the clamp removed (the cap was 10; DirectPlay is the limit). The
+  8+1 rerun on 0.3 failed with 189 MB of RAM free and wasn't repeated (details in NOTES).
+- `damage_fix=1` (`tools/qa/lava.sh`, version 0.3): the player dies in Soulforge's lava; `damage_fix=0`: unhurt
+  (the stock bug). The script first checks from telemetry that the player really reached the lava.
 - All fixes off and QA off: nothing hooked or patched.
 
 Earlier builds with the same fix code: 4 players with 2 moving, in-mission path_dev max ≤ 0.64; 3 players, 5 minutes,
@@ -111,15 +118,25 @@ Earlier builds with the same fix code: 4 players with 2 moving, in-mission path_
    dismissed, `INSTALL.txt` says how to turn it on in Windows features).
 3. Host: forward port 5198 (NewDark MP release notes; 5199 too for the global server, per the video) or use a LAN VPN.
 
+In the game, a dead player is revived when another player frobs them; it's game over only when everyone is dead
+(NewDark's MP release notes).
+
 ## Known issues
 
-- A player without T2MPFix sees players who have it worse than stock (they lag and snap more), so everyone in the
+- A player without T2MPFix sees players who have it no better than stock, usually a bit worse, so everyone in the
   session should install it.
+- Some missions have completion objectives that only the host can do (NewDark's MP release notes).
 - AI and other networked objects still move with the stock ghost code.
 - Alt-tabbing still pauses that player's game, which stalls things like saving for everyone (stock behaviour).
+- Not tested yet, so expect surprises: other players on elevators and moving platforms (these fall back to the stock
+  movement), ladders, rope arrows, mantling, swimming, saving and loading, mission changes, fan missions, and a
+  session over the Internet (lag and packet loss were only simulated).
 
 ## Next steps
 
 - Extend the walker bot to stairs, ladders and elevators in a known mission; add a save/load and mission-change test.
 - Apply the same interpolation to AI ghosts.
 - Optional "keep running in background" for players (the QA subclass already does it).
+- `max_players` below 8: refuse joiners beyond N instead of letting them kick others (today only 8 is safe).
+- `lava.sh` walks to the lava with timed key presses and missed in 4 of 10 tries (the script retries and checks the
+  position); a QA command that places the player would make it deterministic.
